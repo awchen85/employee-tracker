@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-require('console.table');
+const { join } = require('path');
+// require('console.table');
 
 
 const db = mysql.createConnection(
@@ -16,48 +17,48 @@ const db = mysql.createConnection(
   )
 .promise();
 
-  const mainMenu = async () => {
-    const promptValue = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'choice',
-            message: 'What would you like to do?',
-            choices: [
-                {
-                name: 'View All Roles',
-                value: 'VIEW_ROLE'
+const mainMenu = async () => {
+const promptValue = await inquirer.prompt([
+    {
+        type: 'list',
+        name: 'choice',
+        message: 'What would you like to do?',
+        choices: [
+            {
+            name: 'View All Roles',
+            value: 'VIEW_ROLE'
+            },
+            {
+            name: 'View All Employees',
+            value: 'VIEW_EMPLOYEES'
+            },
+            {
+            name: 'View All Departments',
+            value: 'VIEW_DEPARTMENTS'
+            },
+            {
+            name: 'Add a Department',
+            value: 'ADD_DEPARTMENT'
+            },
+            {
+                name: 'Add an Employee',
+                value: 'ADD_EMPLOYEE'
                 },
-                {
-                name: 'View All Employees',
-                value: 'VIEW_EMPLOYEES'
-                },
-                {
-                name: 'View All Departments',
-                value: 'VIEW_DEPARTMENTS'
-                },
-                {
-                name: 'Add a Department',
-                value: 'ADD_DEPARTMENT'
-                },
-                {
-                    name: 'Add an Employee',
-                    value: 'ADD_EMPLOYEE'
-                    },
-                {
-                name: 'Add a Role',
-                value: 'ADD_ROLE'
-                },
-                {
-                name: 'Update An Employee',
-                value: 'UPDATE_EMPLOYEE'
-                },
-                {
-                name: 'Exit',
-                value: 'EXIT'
-                },
-            ],
-        },
-    ]);
+            {
+            name: 'Add a Role',
+            value: 'ADD_ROLE'
+            },
+            {
+            name: 'Update An Employee',
+            value: 'UPDATE_EMPLOYEE'
+            },
+            {
+            name: 'Exit',
+            value: 'EXIT'
+            },
+        ],
+    },
+]);
 
 switch (promptValue.choice) {
     case 'VIEW_ROLE':
@@ -90,7 +91,16 @@ switch (promptValue.choice) {
 };
 
 const viewEmployees = async () => {
-    const [employeeData] = await db.query("SELECT * FROM employee");
+    const [employeeData] = await db.query(`SELECT employee.id, employee.first_name,
+    employee.last_name,
+    role.title,
+    department.name AS department,
+    role.salary,
+    CONCAT (manager.first_name, " ", manager.last_name) AS manager
+    FROM employee
+    LEFT JOIN role ON employee.role_id = role.id
+    LEFT JOIN department ON role.department_id = department.id
+    LEFT JOIN employee manager ON employee.manager_id = manager.id`);
     console.table(employeeData);
     mainMenu();
 };
@@ -100,8 +110,18 @@ const viewDepartments = async () => {
     mainMenu();
 };
 
+const viewRole = async () => {
+    const [roleData] = await db.query(`SELECT
+    role.title AS job_title,
+    role.id,
+    department.name AS department,
+    role.salary FROM role
+    LEFT JOIN department ON role.department_id = department.id`);
+    console.table(roleData);
+    mainMenu();
+};
+
 const addDepartment = async () => {
-    console.log('Fuck the letter S');
  const promptValue = await inquirer.prompt([
     {
             type: 'text',
@@ -109,13 +129,11 @@ const addDepartment = async () => {
             message: 'What department would you like to add?'
     },
  ])
-console.log('1');
 const sql = `INSERT INTO department (name) VALUES (?)`;
 
 const params = [
     promptValue.name
 ];
-console.log(2);
 db.query(sql, params, (err, result) => {
     if (err) {
         console.log(err);
@@ -125,6 +143,29 @@ db.query(sql, params, (err, result) => {
 console.log('Department has been added.');
 mainMenu();
 };
+
+const addRole = async () => {
+    const promptValue = await inquirer.prompt([
+       {
+               type: 'text',
+               name: 'name',
+               message: 'What role would you like to add?'
+       },
+    ])
+   const sql = `INSERT INTO role (name) VALUES (?)`;
+
+   const params = [
+       promptValue.name
+   ];
+   db.query(sql, params, (err, result) => {
+       if (err) {
+           console.log(err);
+           return;
+       }
+   });
+   console.log('Department has been added.');
+   mainMenu();
+   };
 
 const addEmployee = async () => {
     const promptValue = await inquirer.prompt([
@@ -170,4 +211,10 @@ db.query(sql, params, (err, result) => {
 });
 }
 
+// const updateEmployee
+
+
+
   mainMenu();
+
+  module.exports
