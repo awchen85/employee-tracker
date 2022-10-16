@@ -1,6 +1,5 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-const { join } = require('path');
 // require('console.table');
 
 
@@ -79,8 +78,8 @@ switch (promptValue.choice) {
     case 'ADD_EMPLOYEE':
         addEmployee();
         break;
-    case 'UPDATE_EMPLOYEES':
-        updateEmployees();
+    case 'UPDATE_EMPLOYEE':
+        updateEmployee();
         break;
     case 'EXIT':
         process.exit();
@@ -126,9 +125,9 @@ const addDepartment = async () => {
     {
             type: 'text',
             name: 'name',
-            message: 'What department would you like to add?'
+            message: 'What department would you like to add? (Use 1-5 for departments)'
     },
- ])
+ ]);
 const sql = `INSERT INTO department (name) VALUES (?)`;
 
 const params = [
@@ -148,15 +147,27 @@ const addRole = async () => {
     const promptValue = await inquirer.prompt([
        {
                type: 'text',
-               name: 'name',
-               message: 'What role would you like to add?'
+               name: 'title',
+               message: 'What is the title of the role?'
        },
-    ])
-   const sql = `INSERT INTO role (name) VALUES (?)`;
-
+       {
+                type: 'int',
+                name: 'salary',
+                message: 'What is the salary of the role?'
+        },
+        {
+                type: 'text',
+                name: 'department',
+                message: 'What department is this role in? (Use 1-5 for departments)'
+        },
+    ]);
+   const sql = `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`;
    const params = [
-       promptValue.name
+       promptValue.title,
+       promptValue.salary,
+       promptValue.department
    ];
+
    db.query(sql, params, (err, result) => {
        if (err) {
            console.log(err);
@@ -181,40 +192,68 @@ const addEmployee = async () => {
         },
         {
             type: 'input',
-            name: 'role',
-            message: "What role is your employee in?"
+            name: 'role_id',
+            message: "What role is your employee in? (Use 1-5 for roles)"
         },
         {
             type: 'input',
-            name: 'manager',
+            name: 'manager_id',
             message: "Who is their manager?"
         },
 
-    ])
+    ]);
 
     const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES
-(?,?,?,?)`;
+    (?,?,?,?)`;
 const params = [
     promptValue.first_name,
     promptValue.last_name,
-    promptValue.role,
-    promptValue.manager,
+    promptValue.role_id,
+    promptValue.manager_id,
 ];
 db.query(sql, params, (err, result) => {
     if (err) {
         console.log(err);
         return;
     }
-    console.log(result);
-    console.table(result);
-    mainMenu();
 });
+    mainMenu();
 }
 
-// const updateEmployee
+const updateEmployee = async () => {
+    const [employeeData] = await db.query(`SELECT * FROM employee`);
+    console.table(employeeData);
+    const promptValue =  await inquirer.prompt([
+    {
+    type: 'int',
+    name: 'employee_id',
+    message: 'Which employee ID would you like to update?'
+    },
+]);
+const [roleData] = await db.query(`SELECT * FROM role`);
+console.table(roleData);
+const promptValueTwo = await inquirer.prompt([
+    {
+    type: 'int',
+    name: 'role_id',
+    message: "What is the employee's new role? (Use 1-5 for roles)"
+    },
+]);
+
+const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
+const params = [
+    promptValueTwo.role_id,
+    promptValue.employee_id,
+]
+db.query(sql, params, (err, result) => {
+    if (err) {
+        console.log(err);
+        return;
+    }
+});
+mainMenu();
+};
 
 
 
   mainMenu();
-
-  module.exports
