@@ -32,6 +32,14 @@ const promptValue = await inquirer.prompt([
             value: 'VIEW_EMPLOYEES'
             },
             {
+            name: 'View All Employees By Manager',
+            value: 'VIEW_EMPLOYEES_BY_MANAGER'
+            },
+            {
+            name: 'View All Employees By Department',
+            value: 'VIEW_EMPLOYEES_BY_DEPARTMENT'
+            },
+            {
             name: 'View All Departments',
             value: 'VIEW_DEPARTMENTS'
             },
@@ -40,9 +48,9 @@ const promptValue = await inquirer.prompt([
             value: 'ADD_DEPARTMENT'
             },
             {
-                name: 'Add an Employee',
-                value: 'ADD_EMPLOYEE'
-                },
+            name: 'Add an Employee',
+            value: 'ADD_EMPLOYEE'
+            },
             {
             name: 'Add a Role',
             value: 'ADD_ROLE'
@@ -66,6 +74,12 @@ switch (promptValue.choice) {
     case 'VIEW_EMPLOYEES':
         viewEmployees();
         break;
+    case 'VIEW_EMPLOYEES_BY_MANAGER':
+        viewEmployeesByManager();
+        break;
+    case 'VIEW_EMPLOYEES_BY_DEPARTMENT':
+        viewEmployeesByDepartment();
+        break;
     case 'VIEW_DEPARTMENTS':
         viewDepartments();
         break;
@@ -81,6 +95,9 @@ switch (promptValue.choice) {
     case 'UPDATE_EMPLOYEE':
         updateEmployee();
         break;
+    case 'UPDATE_MANAGER':
+        updateManager();
+        break;
     case 'EXIT':
         process.exit();
         break;
@@ -89,6 +106,7 @@ switch (promptValue.choice) {
 }
 };
 
+//view functions
 const viewEmployees = async () => {
     const [employeeData] = await db.query(`SELECT employee.id, employee.first_name,
     employee.last_name,
@@ -100,6 +118,40 @@ const viewEmployees = async () => {
     LEFT JOIN role ON employee.role_id = role.id
     LEFT JOIN department ON role.department_id = department.id
     LEFT JOIN employee manager ON employee.manager_id = manager.id`);
+    console.table(employeeData);
+    mainMenu();
+};
+const viewEmployeesByManager = async () => {
+    const [employeeData] = await db.query(`SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title,
+    department.name AS department,
+    role.salary,
+    CONCAT (manager.first_name, " ", manager.last_name) AS manager
+    FROM employee
+    LEFT JOIN role ON employee.role_id = role.id
+    LEFT JOIN department ON role.department_id = department.id
+    LEFT JOIN employee manager ON employee.manager_id = manager.id
+    ORDER BY manager`);
+    console.table(employeeData);
+    mainMenu();
+};
+const viewEmployeesByDepartment = async () => {
+    const [employeeData] = await db.query(`SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title,
+    department.name AS department,
+    role.salary,
+    CONCAT (manager.first_name, " ", manager.last_name) AS manager
+    FROM employee
+    LEFT JOIN role ON employee.role_id = role.id
+    LEFT JOIN department ON role.department_id = department.id
+    LEFT JOIN employee manager ON employee.manager_id = manager.id
+    ORDER BY department`);
     console.table(employeeData);
     mainMenu();
 };
@@ -120,12 +172,14 @@ const viewRole = async () => {
     mainMenu();
 };
 
+
+//add functions
 const addDepartment = async () => {
  const promptValue = await inquirer.prompt([
     {
             type: 'text',
             name: 'name',
-            message: 'What department would you like to add? (Use 1-5 for departments)'
+            message: 'What department would you like to add?'
     },
  ]);
 const sql = `INSERT INTO department (name) VALUES (?)`;
@@ -252,8 +306,35 @@ db.query(sql, params, (err, result) => {
     }
 });
 mainMenu();
+}
+const updateManager = async () => {
+    const [employeeData] = await db.query(`SELECT * FROM employee`);
+    console.table(employeeData);
+    const promptValue =  await inquirer.prompt([
+    {
+    type: 'int',
+    name: 'employee_id',
+    message: 'Which employee ID would you like to update?'
+    },
+    {
+    type: 'int',
+    name: 'manager_id',
+    message: "Who is the employee's new manager?"
+    }
+]);
+
+const sql = `UPDATE employee SET manager_id = ? WHERE id = ?`;
+const params = [
+    promptValue.employee_id,
+    promptValue.manager_id
+]
+db.query(sql, params, (err, result) => {
+    if (err) {
+        console.log(err);
+        return;
+    }
+});
+mainMenu();
 };
-
-
 
   mainMenu();
