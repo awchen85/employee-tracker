@@ -8,12 +8,17 @@ Walkthrough Video: https://drive.google.com/file/d/1hlWFMNdTM_qROwRSEGFQ1PjouLHs
 
 How to use software:
 
-Install all requirements
-node index.js to launch the app
+- Install all requirements
+- Run node index.js to launch the app
+- Follow the instructions!
 
 Built with
 - Node
 - Inquirer
 - MySQL
+
+Screenshots:
+![Options](assets/options.JPG))
+![View Employees](assets/view%20employees.JPG)
 
 Made by Alex Chen
